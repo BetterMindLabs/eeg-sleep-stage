@@ -1,42 +1,44 @@
 import streamlit as st
 import google.generativeai as genai
 
-# Configure Gemini
+# === Configure Gemini ===
 api_key = st.secrets["api_keys"]["google_api_key"]
 genai.configure(api_key=api_key)
 model = genai.GenerativeModel("gemini-1.5-flash")
 
-# Streamlit UI
+# === Streamlit UI ===
 st.set_page_config(page_title="EEG Sleep Stage Classifier")
 st.title("EEG Sleep Stage Classifier")
-st.write("Paste EEG signal features or textual interpretation. The system will classify the likely sleep stage.")
+st.write("Adjust EEG features using the sliders. The system will classify the likely sleep stage.")
 
-# Input
-eeg_features = st.text_area(
-    "Enter EEG Feature Summary",
-    height=250,
-    placeholder="Example: Alpha waves dominant, high-frequency bursts, low delta activity..."
-)
+# === Sliders for EEG features ===
+alpha = st.slider("Alpha Wave Dominance", 0, 10, 4)
+delta = st.slider("Delta Wave Presence", 0, 10, 6)
+spindles = st.slider("Spindle Activity", 0, 10, 3)
+rem_markers = st.slider("REM Markers (Eye Movement)", 0, 10, 2)
+muscle_tone = st.slider("Muscle Tone", 0, 10, 5)
+noise = st.slider("Signal Noise/Artifacts", 0, 10, 1)
 
-# Button
-if st.button("Classify Sleep Stage") and eeg_features.strip():
-    with st.spinner("Classifying..."):
+# === Predict Button ===
+if st.button("Classify Sleep Stage"):
+    with st.spinner("Analyzing EEG signals..."):
         prompt = f"""
-You are a trained EEG analysis model for sleep stage classification. Given the EEG signal features below, classify the most probable sleep stage:
+You are a sleep stage classification model that predicts stages from EEG features.
 
-Possible classes:
-- Wake
-- N1 (light sleep)
-- N2 (moderate sleep)
-- N3 (deep sleep)
-- REM (rapid eye movement)
+Given the values below, predict the most likely sleep stage from:
+[Wake, N1, N2, N3, REM]
 
-EEG Features:
-\"\"\"{eeg_features}\"\"\"
+EEG Feature Scores (0–10 scale):
+- Alpha Wave Dominance: {alpha}
+- Delta Wave Presence: {delta}
+- Spindle Activity: {spindles}
+- REM Indicators (Eye Movement): {rem_markers}
+- Muscle Tone: {muscle_tone}
+- Noise/Artifacts: {noise}
 
-Respond with:
+Respond strictly in the format:
 Stage: <Predicted Stage>  
-Confidence: <Score>% (0–95)
+Confidence: <Score>% (between 0 and 95)
 """
 
         response = model.generate_content(prompt)
